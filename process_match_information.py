@@ -33,13 +33,32 @@ def fetch_match_data(match_id):
     url = f"https://americas.api.riotgames.com/lol/match/v5/matches/{match_id}"
     response = requests.get(url, headers=headers)
     return response.json()
+
+def process_participant_data(participant_data):
+    participant_information = {}
+    participant_information["puuid"] = participant_data["puuid"]
+    participant_information["riotIdGameName"] = participant_data["riotIdGameName"]
+    participant_information["championName"] = participant_data["championName"]
+    participant_information["teamId"] = participant_data["teamId"]
+    participant_information["lane"] = participant_data["lane"]
+    participant_information["win"] = participant_data["win"]
+    participant_information["kills"] = participant_data["kills"]
+    participant_information["deaths"] = participant_data["deaths"]
+    participant_information["assists"] = participant_data["assists"]
+    participant_information["totalDamageDealtToChampions"] = participant_data["totalDamageDealtToChampions"]
+    participant_information["visionScore"] = participant_data["visionScore"]
+    return participant_information
         
 def process_match_data(match_data):
     match_information = {}
-    
-    print(match_data)
+    participant_information = []
     
     match_information["game_id"] = match_data["metadata"]["matchId"]
+    
+    for participant in match_data["info"]["participants"]:
+        participant_information.append(process_participant_data(participant))
+    match_information["participants"] = participant_information
+    
     return match_information
 
 main()
