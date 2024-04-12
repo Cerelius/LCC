@@ -8,13 +8,13 @@ load_dotenv()
 def main():
     # Accept user input for the file name
     match_id = input("Enter the match ID (Enter to use sample data): ")
+    file_path = "tests/match_information_response.json"    
+    file_name = file_path.split("/")[-1].split(".")[0]
     if match_id == "":
-        file_path = "tests/match_information_response.json"    
         # Open the test file for processing
         with open(file_path, "r") as file:
             # Process the file contents
             match_data = json.load(file)
-        file_name = file_path.split("/")[-1].split(".")[0]
     # Fetch data from the API if match ID is provided
     else:
         match_data = fetch_match_data("NA1_" + match_id)
@@ -22,7 +22,7 @@ def main():
     match_information = process_match_data(match_data)
     
     # Output the processed data to a new file
-    output_file_path = f"results/{(file_name, match_id)[match_id != ""]}_process.json"
+    output_file_path = f"results/{(file_name, match_id)[match_id != '']}_process.json"
     with open(output_file_path, "w") as output_file:
         json.dump(match_information, output_file)
 
