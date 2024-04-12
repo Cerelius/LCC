@@ -3,6 +3,8 @@ import requests
 import os
 from dotenv import load_dotenv
 
+load_dotenv()
+
 def main():
     # Accept user input for the file name
     match_id = input("Enter the match ID (Enter to use sample data): ")
