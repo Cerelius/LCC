@@ -7,25 +7,30 @@ from datetime import date
 
 def main():
     # Accept user input for the file name
-    match_id = input("Enter the match ID (Enter to use sample data): ")
-    file_path = "tests/match_information_response.json"    
+    tournament_name = input("Enter the tournament file name (Enter to use LCC_Season_2): ")
+    file_path = f"tournaments/{(tournament_name,'LCC_Season_2')[tournament_name == '']}.txt"    
     file_name = file_path.split("/")[-1].split(".")[0]
-    if match_id == "":
-        # Open the test file for processing
-        with open(file_path, "r") as file:
-            # Process the file contents
-            match_data = json.load(file)
-    # Fetch data from the API if match ID is provided
-    else:
-        match_data = fetch_match_data("NA1_" + match_id)
-    
-    match_information = process_match_data(match_data)
-    
-    # Output the processed data to a new file
-    output_file_path = f"results/{(file_name, match_id)[match_id != '']}_process.json"
-    with open(output_file_path, "w") as output_file:
-        json.dump(match_information, output_file)
+  
+    # Open the file and read the match IDs
+    with open(file_path, "r") as file:
+        match_ids = file.readlines()
 
+    processed_matches = []
+    # For each listed match, fetch and transform the data
+    for match_id in match_ids:
+        match_id = match_id.strip()
+        riot_match_data = fetch_match_data("NA1_" + match_id)
+        processed_match = process_match_data(riot_match_data)
+
+        # Dump each processed match data to json file for future additional programmatic use
+        output_file_path = f"results/{(file_name, match_id)[match_id != '']}_data.json"
+        with open(output_file_path, "w") as output_file:
+            json.dump(processed_match, output_file)
+        # Add to list for excel workbook
+        processed_matches.append(processed_match)
+    
+    build_excel_workbook(processed_matches)
+    print("Excel workbook created successfully.")
 
 def fetch_match_data(match_id):
     api_key = os.getenv("RIOT_API_KEY")
@@ -45,7 +50,6 @@ def process_match_data(match_data):
     for participant in match_data["info"]["participants"]:
         participant_information.append(process_participant_data(participant))
     match_information["participants"] = participant_information
-    build_excel_workbook(match_information)
     return match_information
 
 def process_participant_data(participant_data):
@@ -63,18 +67,19 @@ def process_participant_data(participant_data):
     participant_information["visionScore"] = participant_data["visionScore"]
     return participant_information
 
-def build_excel_workbook(_match_data):
-    match_df = pandas.DataFrame(_match_data["participants"])
-    with pandas.ExcelWriter(f"results/{_match_data['game_id']}_{date.today()}.xlsx", engine="openpyxl", mode="w") as writer:
-        match_df.to_excel(writer, sheet_name=f"{_match_data['game_id']}", index=False)
-        for participant in _match_data["participants"]:
-            sheet_name = f"{participant['riotIdGameName']}"
-            if sheet_name in writer.sheets:
-                startrow = writer.sheets[sheet_name].max_row
-                df = pandas.DataFrame(participant, index=[0])
-                df.to_excel(writer, sheet_name=sheet_name, startrow=startrow, index=False, header=False)
-            else:
-                pandas.DataFrame(participant, index=[0]).to_excel(writer, sheet_name=sheet_name, index=False)
+def build_excel_workbook(matches):
+    
+    with pandas.ExcelWriter(f"results/Stats_Report_{date.today()}.xlsx", engine="openpyxl", mode="w") as writer:
+        for match in matches:
+            pandas.DataFrame(match["participants"]).to_excel(writer, sheet_name=f"{match['game_id']}", index=False)
+            for participant in match["participants"]:
+                sheet_name = f"{participant['riotIdGameName']}"
+                if sheet_name in writer.sheets:
+                    startrow = writer.sheets[sheet_name].max_row
+                    df = pandas.DataFrame(participant, index=[0])
+                    df.to_excel(writer, sheet_name=sheet_name, startrow=startrow, index=False, header=False)
+                else:
+                    pandas.DataFrame(participant, index=[0]).to_excel(writer, sheet_name=sheet_name, index=False)
 
 
 load_dotenv(dotenv_path=".env", verbose=True, override=True)           
