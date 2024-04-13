@@ -15,6 +15,10 @@ def main():
     with open(file_path, "r") as file:
         match_ids = file.readlines()
 
+    if not match_ids :
+        print("No match IDs found in the file.")
+        return
+    
     processed_matches = []
     # For each listed match, fetch and transform the data
     for match_id in match_ids:
