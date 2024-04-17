@@ -61,14 +61,39 @@ def process_participant_data(participant_data):
     participant_information["puuid"] = participant_data["puuid"]
     participant_information["riotIdGameName"] = participant_data["riotIdGameName"]
     participant_information["championName"] = participant_data["championName"]
-    participant_information["teamId"] = participant_data["teamId"]
-    participant_information["lane"] = participant_data["lane"]
+    participant_information["individualPosition"] = participant_data["individualPosition"]
     participant_information["win"] = participant_data["win"]
+    participant_information["gameLength"] = participant_data["challenges"]["gameLength"]
+    participant_information["champLevel"] = participant_data["champLevel"]
     participant_information["kills"] = participant_data["kills"]
     participant_information["deaths"] = participant_data["deaths"]
     participant_information["assists"] = participant_data["assists"]
+    participant_information["kda"] = participant_data["challenges"]["kda"]
+    participant_information["killParticipation"] = participant_data["challenges"]["killParticipation"]
+   
+    participant_information["goldEarned"] = participant_data["goldEarned"]
+    participant_information["goldPerMinute"] = participant_data["challenges"]["goldPerMinute"]
+    participant_information["laneMinionsFirst10Minutes"] = participant_data["challenges"]["laneMinionsFirst10Minutes"]
+    participant_information["jungleCsBefore10Minutes"] = participant_data["challenges"]["jungleCsBefore10Minutes"]
+    participant_information["objectivesStolen"] = participant_data["objectivesStolen"]
+    
     participant_information["totalDamageDealtToChampions"] = participant_data["totalDamageDealtToChampions"]
+    participant_information["damagePerMinute"] = participant_data["challenges"]["damagePerMinute"]
+    participant_information["teamDamagePercentage"] = participant_data["challenges"]["teamDamagePercentage"]
+    participant_information["damageTakenOnTeamPercentage"] = participant_data["challenges"]["damageTakenOnTeamPercentage"]
+
+    participant_information["firstBloodKill"] = participant_data["firstBloodKill"]
+    participant_information["soloKills"] = participant_data["challenges"]["soloKills"]
+
+    participant_information["tripleKills"] = participant_data["tripleKills"]
+    participant_information["quadraKills"] = participant_data["quadraKills"]
+    participant_information["pentaKills"] = participant_data["pentaKills"]
+    participant_information["multikills"] = participant_data["challenges"]["multikills"]
+    
     participant_information["visionScore"] = participant_data["visionScore"]
+    participant_information["visionScorePerMinute"] = participant_data["challenges"]["visionScorePerMinute"]
+    participant_information["totalTimeCCDealt"] = participant_data["totalTimeCCDealt"]
+    participant_information["effectiveHealAndShielding"] = participant_data["challenges"]["effectiveHealAndShielding"]
     return participant_information
 
 def build_excel_workbook(matches):
