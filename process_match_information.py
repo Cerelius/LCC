@@ -1,9 +1,8 @@
-import json
 import requests
 import os
 from dotenv import load_dotenv
-import pandas
-from datetime import date
+import outputs
+
 
 def main():
     # Accept user input for the file name
@@ -15,7 +14,7 @@ def main():
     with open(file_path, "r") as file:
         match_ids = file.readlines()
 
-    if not match_ids :
+    if not match_ids:
         print("No match IDs found in the file.")
         return
     
@@ -34,15 +33,13 @@ def main():
 
         # Merge the timeline data with the match data
         processed_match["participants"] = [dict(participant, **processed_timeline_data[participant["puuid"]]) for participant in processed_match["participants"]]
-        
+
         # Dump each processed match data to json file for future additional programmatic use
-        output_file_path = f"results/{(file_name, match_id)[match_id != '']}_data.json"
-        with open(output_file_path, "w") as output_file:
-            json.dump(processed_match, output_file)
+        outputs.build_match_json(file_name, match_id, processed_match)
+        
         # Add to list for excel workbook
         processed_matches.append(processed_match)
-    
-    build_excel_workbook(processed_matches)
+    outputs.build_excel_workbook(processed_matches)
     print("Excel workbook created successfully.")
 
 def fetch_riot_data(url):
@@ -107,8 +104,6 @@ def process_participant_data(participant_data):
     participant_information["cs"] = participant_data["totalMinionsKilled"] + participant_data["neutralMinionsKilled"]
     participant_information["csm"] = participant_information["cs"]/participant_information["gameLength"]
    
-    participant_information["laneMinionsFirst10Minutes"] = participant_data["challenges"]["laneMinionsFirst10Minutes"]
-    participant_information["jungleCsBefore10Minutes"] = participant_data["challenges"]["jungleCsBefore10Minutes"]
     participant_information["goldEarned"] = participant_data["goldEarned"]
     participant_information["goldPerMinute"] = participant_data["challenges"]["goldPerMinute"]
     participant_information["objectivesStolen"] = participant_data["objectivesStolen"]
@@ -132,19 +127,7 @@ def process_participant_data(participant_data):
     participant_information["effectiveHealAndShielding"] = participant_data["challenges"]["effectiveHealAndShielding"]
     return participant_information
 
-def build_excel_workbook(matches):
-    
-    with pandas.ExcelWriter(f"results/Stats_Report_{date.today()}.xlsx", engine="openpyxl", mode="w") as writer:
-        for match in matches:
-            pandas.DataFrame(match["participants"]).to_excel(writer, sheet_name=f"{match['game_id']}", index=False)
-            for participant in match["participants"]:
-                sheet_name = f"{participant['riotIdGameName']}"
-                if sheet_name in writer.sheets:
-                    startrow = writer.sheets[sheet_name].max_row
-                    df = pandas.DataFrame(participant, index=[0])
-                    df.to_excel(writer, sheet_name=sheet_name, startrow=startrow, index=False, header=False)
-                else:
-                    pandas.DataFrame(participant, index=[0]).to_excel(writer, sheet_name=sheet_name, index=False)
+
 
 
 load_dotenv(dotenv_path=".env", verbose=True, override=True)           
