@@ -51,6 +51,7 @@ def aggregate_player_data(match_data):
             puuid = participant['puuid']
             if puuid not in player_data:
                 player_data[puuid] = {
+                    'riotIdGameName': participant['riotIdGameName'],
                     'game_minutes': 0,
                     'kills': 0,
                     'deaths': 0,
