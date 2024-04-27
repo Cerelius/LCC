@@ -70,17 +70,17 @@ def aggregate_player_data(match_data):
             player_data[puuid]['deaths'] += participant['deaths']
             player_data[puuid]['assists'] += participant['assists']
             if player_data[puuid]['deaths'] == 0:
-                player_data[puuid]['kda'] = player_data[puuid]['kills'] + player_data[puuid]['assists']  # or some other value
+                player_data[puuid]['kda'] = player_data[puuid]['kills'] + player_data[puuid]['assists']
             else:
                 player_data[puuid]['kda'] = round((player_data[puuid]['kills'] + player_data[puuid]['assists']) / player_data[puuid]['deaths'], 2)
             player_data[puuid]['dmg'] += participant['totalDamageDealtToChampions']
             player_data[puuid]['dpm'] = round(player_data[puuid]['dmg'] / player_data[puuid]['game_minutes'], 2)
             player_data[puuid]['cs'] += participant['cs']
             player_data[puuid]['csm'] = round(player_data[puuid]['cs'] / player_data[puuid]['game_minutes'], 2)
-            # player_data[puuid]['csd14'] += participant['csd14']
+            # TODO: Add CS differential at 14 minutes
             player_data[puuid]['first_blood'] += participant['firstBloodKill']
             player_data[puuid]['solo_kills'] += participant['soloKills']
-            # add more data points as needed
+            
     return player_data
 
 def fetch_riot_data(url):
@@ -167,9 +167,6 @@ def process_participant_data(participant_data):
     participant_information["totalTimeCCDealt"] = participant_data["totalTimeCCDealt"]
     participant_information["effectiveHealAndShielding"] = participant_data["challenges"]["effectiveHealAndShielding"]
     return participant_information
-
-
-
 
 load_dotenv(dotenv_path=".env", verbose=True, override=True)           
 main()
