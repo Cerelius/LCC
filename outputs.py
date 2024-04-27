@@ -62,7 +62,7 @@ def build_excel_workbook2(matches):
                     for cell in row:
                         cell.fill = grey_fill
             for participant in match["participants"]:
-                sheet_name = f"{participant['riotIdGameName']}"
+                sheet_name = f"{participant['player']}"
                 if sheet_name in writer.sheets:
                     startrow = writer.sheets[sheet_name].max_row
                     df = pandas.DataFrame(participant, index=[0])
@@ -80,6 +80,6 @@ def build_excel_workbook2(matches):
                             max_length = len(cell.value)
                     except:
                         pass
-                adjusted_width = (max_length + 2)
+                adjusted_width = (max_length + 4)
                 worksheet.column_dimensions[get_column_letter(column[0].column)].width = adjusted_width
             worksheet.column_dimensions['A'].hidden = True
