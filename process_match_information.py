@@ -25,12 +25,14 @@ def main():
         match_url = f"https://americas.api.riotgames.com/lol/match/v5/matches/NA1_{match_id}"
         riot_match_data = fetch_riot_data(match_url)
         processed_match = process_match_data(riot_match_data)
-
         # Fetch and process timeline data
         timeline_url = match_url + "/timeline"
         riot_timeline_data = fetch_riot_data(timeline_url)
         processed_timeline_data = process_timeline_data(riot_timeline_data)
-
+        position_data = get_position_data(riot_match_data["info"]["participants"])
+        for position, teams in position_data.items():
+            processed_timeline_data[teams[100]]["csd14"] = processed_timeline_data[teams[100]]["cs14"] - processed_timeline_data[teams[200]]["cs14"]
+            processed_timeline_data[teams[200]]["csd14"] = processed_timeline_data[teams[200]]["cs14"] - processed_timeline_data[teams[100]]["cs14"]
         # Merge the timeline data with the match data
         processed_match["participants"] = [dict(participant, **processed_timeline_data[participant["puuid"]]) for participant in processed_match["participants"]]
 
@@ -39,12 +41,28 @@ def main():
         
         # Add to list for excel workbook
         processed_matches.append(processed_match)
-    outputs.build_player_stats_report(aggregate_player_data(processed_matches))
-    outputs.build_excel_workbook(processed_matches)
+    outputs.build_player_stats_report(aggregate_player_season_data(processed_matches))
+    outputs.build_excel_workbook2(processed_matches)
     print("Excel workbook created successfully.")
 
+def get_position_data(participants):
+    position_data = {
+        'TOP': {100: None, 200: None},
+        'JUNGLE': {100: None, 200: None},
+        'MIDDLE': {100: None, 200: None},
+        'BOTTOM': {100: None, 200: None},
+        'UTILITY': {100: None, 200: None},
+    }
 
-def aggregate_player_data(match_data):
+    for participant in participants:
+        position = participant['teamPosition']
+        team = participant['teamId']
+        puuid = participant['puuid']
+        if position in position_data and team in position_data[position]:
+            position_data[position][team] = puuid
+    return position_data
+
+def aggregate_player_season_data(match_data):
     player_data = {}
     for match in match_data:
         for participant in match["participants"]:
@@ -52,6 +70,7 @@ def aggregate_player_data(match_data):
             if puuid not in player_data:
                 player_data[puuid] = {
                     'riotIdGameName': participant['riotIdGameName'],
+                    'matches': 0,
                     'game_minutes': 0,
                     'kills': 0,
                     'deaths': 0,
@@ -65,6 +84,7 @@ def aggregate_player_data(match_data):
                     'first_blood': 0,
                     'solo_kills': 0
                 }
+            player_data[puuid]['matches'] += 1
             player_data[puuid]['game_minutes'] += round(participant['gameLength'], 2)
             player_data[puuid]['kills'] += participant['kills']
             player_data[puuid]['deaths'] += participant['deaths']
@@ -78,6 +98,7 @@ def aggregate_player_data(match_data):
             player_data[puuid]['cs'] += participant['cs']
             player_data[puuid]['csm'] = round(player_data[puuid]['cs'] / player_data[puuid]['game_minutes'], 2)
             # TODO: Add CS differential at 14 minutes
+            player_data[puuid]['csd14'] += participant['csd14']
             player_data[puuid]['first_blood'] += participant['firstBloodKill']
             player_data[puuid]['solo_kills'] += participant['soloKills']
             
@@ -134,25 +155,25 @@ def process_participant_data(participant_data):
     participant_information["championName"] = participant_data["championName"]
     participant_information["role"] = participant_data["teamPosition"]
     participant_information["win"] = participant_data["win"]
-    participant_information["gameLength"] = participant_data["challenges"]["gameLength"]/60
+    participant_information["gameLength"] = round(participant_data["challenges"]["gameLength"]/60, 1)
     participant_information["champLevel"] = participant_data["champLevel"]
     participant_information["kills"] = participant_data["kills"]
     participant_information["deaths"] = participant_data["deaths"]
     participant_information["assists"] = participant_data["assists"]
-    participant_information["kda"] = participant_data["challenges"]["kda"]
-    participant_information["killParticipation"] = participant_data["challenges"]["killParticipation"]
+    participant_information["kda"] = round(participant_data["challenges"]["kda"], 2)
+    participant_information["killParticipation"] = round(participant_data["challenges"]["killParticipation"], 2)
     
     participant_information["cs"] = participant_data["totalMinionsKilled"] + participant_data["neutralMinionsKilled"]
-    participant_information["csm"] = participant_information["cs"]/participant_information["gameLength"]
+    participant_information["csm"] = round(participant_information["cs"]/participant_information["gameLength"], 2)
    
     participant_information["goldEarned"] = participant_data["goldEarned"]
-    participant_information["goldPerMinute"] = participant_data["challenges"]["goldPerMinute"]
+    participant_information["goldPerMinute"] = round(participant_data["challenges"]["goldPerMinute"],2)
     participant_information["objectivesStolen"] = participant_data["objectivesStolen"]
     
     participant_information["totalDamageDealtToChampions"] = participant_data["totalDamageDealtToChampions"]
-    participant_information["damagePerMinute"] = participant_data["challenges"]["damagePerMinute"]
-    participant_information["teamDamagePercentage"] = participant_data["challenges"]["teamDamagePercentage"]
-    participant_information["damageTakenOnTeamPercentage"] = participant_data["challenges"]["damageTakenOnTeamPercentage"]
+    participant_information["damagePerMinute"] = round(participant_data["challenges"]["damagePerMinute"],2)
+    participant_information["teamDamagePercentage"] = round(participant_data["challenges"]["teamDamagePercentage"]*100, 0)
+    participant_information["damageTakenOnTeamPercentage"] = round(participant_data["challenges"]["damageTakenOnTeamPercentage"]*100, 0 )
 
     participant_information["firstBloodKill"] = participant_data["firstBloodKill"]
     participant_information["soloKills"] = participant_data["challenges"]["soloKills"]
@@ -163,9 +184,9 @@ def process_participant_data(participant_data):
     participant_information["multikills"] = participant_data["challenges"]["multikills"]
     
     participant_information["visionScore"] = participant_data["visionScore"]
-    participant_information["visionScorePerMinute"] = participant_data["challenges"]["visionScorePerMinute"]
+    participant_information["visionScorePerMinute"] = round(participant_data["challenges"]["visionScorePerMinute"],2)
     participant_information["totalTimeCCDealt"] = participant_data["totalTimeCCDealt"]
-    participant_information["effectiveHealAndShielding"] = participant_data["challenges"]["effectiveHealAndShielding"]
+    participant_information["effectiveHealAndShielding"] = round(participant_data["challenges"]["effectiveHealAndShielding"],0)
     return participant_information
 
 load_dotenv(dotenv_path=".env", verbose=True, override=True)           
