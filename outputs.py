@@ -10,8 +10,7 @@ def build_match_json(file_name, match_id, processed_match):
         json.dump(processed_match, output_file)       
 
 def build_cumulative_reports(matches, player_data):
-    with pandas.ExcelWriter(f"results/Stats_Report_{date.today()}.xlsx", engine="openpyxl", mode="w") as writer:
-        pandas.DataFrame(player_data).T.to_excel(writer, sheet_name="Player Stats", index=True)
+    with pandas.ExcelWriter(f"results/Stats_Report_{date.today()}.xlsx", engine="openpyxl", mode="w") as writer:        
         for i, match in enumerate(matches):
             sheet_name = "Match Report"
             if sheet_name in writer.sheets:
@@ -35,7 +34,8 @@ def build_cumulative_reports(matches, player_data):
                 if (row[0].row - 1) % 5 == 0 and row[0].row > 1:
                     for cell in row:
                         cell.border = thin_border
-            
+
+        pandas.DataFrame(player_data).T.to_excel(writer, sheet_name="Player Stats", index=True)   
         format_workbook(writer)
 
 def build_match_sheets(matches):
