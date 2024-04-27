@@ -20,3 +20,7 @@ def build_match_json(file_name, match_id, processed_match):
     output_file_path = f"results/{(file_name, match_id)[match_id != '']}_data.json"
     with open(output_file_path, "w") as output_file:
         json.dump(processed_match, output_file)
+
+def build_player_stats_report(player_data):
+    with pandas.ExcelWriter(f"results/Player_Stats_{date.today()}.xlsx", engine="openpyxl", mode="w") as writer:
+        pandas.DataFrame(player_data).T.to_excel(writer, sheet_name="Player Stats", index=True)

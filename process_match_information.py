@@ -39,15 +39,55 @@ def main():
         
         # Add to list for excel workbook
         processed_matches.append(processed_match)
+    outputs.build_player_stats_report(aggregate_player_data(processed_matches))
     outputs.build_excel_workbook(processed_matches)
     print("Excel workbook created successfully.")
+
+
+def aggregate_player_data(match_data):
+    player_data = {}
+    for match in match_data:
+        for participant in match["participants"]:
+            puuid = participant['puuid']
+            if puuid not in player_data:
+                player_data[puuid] = {
+                    'game_minutes': 0,
+                    'kills': 0,
+                    'deaths': 0,
+                    'assists': 0,
+                    'kda': 0,
+                    'dmg': 0,
+                    'dpm': 0,
+                    'cs': 0,
+                    'csm': 0,
+                    'csd14': 0,
+                    'first_blood': 0,
+                    'solo_kills': 0
+                }
+            player_data[puuid]['game_minutes'] += round(participant['gameLength'], 2)
+            player_data[puuid]['kills'] += participant['kills']
+            player_data[puuid]['deaths'] += participant['deaths']
+            player_data[puuid]['assists'] += participant['assists']
+            if player_data[puuid]['deaths'] == 0:
+                player_data[puuid]['kda'] = player_data[puuid]['kills'] + player_data[puuid]['assists']  # or some other value
+            else:
+                player_data[puuid]['kda'] = round((player_data[puuid]['kills'] + player_data[puuid]['assists']) / player_data[puuid]['deaths'], 2)
+            player_data[puuid]['dmg'] += participant['totalDamageDealtToChampions']
+            player_data[puuid]['dpm'] = round(player_data[puuid]['dmg'] / player_data[puuid]['game_minutes'], 2)
+            player_data[puuid]['cs'] += participant['cs']
+            player_data[puuid]['csm'] = round(player_data[puuid]['cs'] / player_data[puuid]['game_minutes'], 2)
+            # player_data[puuid]['csd14'] += participant['csd14']
+            player_data[puuid]['first_blood'] += participant['firstBloodKill']
+            player_data[puuid]['solo_kills'] += participant['soloKills']
+            # add more data points as needed
+    return player_data
 
 def fetch_riot_data(url):
     api_key = os.getenv("RIOT_API_KEY")
     headers = {"X-Riot-Token": api_key}
     response = requests.get(url, headers=headers)
     if response.status_code != 200:
-        raise Exception(f"Failed to fetch match data: {response.text}")
+        raise requests.exceptions.HTTPError(f"Failed to fetch match data: {response.text}")
     return response.json()
         
 def process_match_data(match_data):
