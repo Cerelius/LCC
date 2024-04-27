@@ -83,7 +83,8 @@ def aggregate_player_season_data(match_data):
                     'dpm': 0,
                     'cs': 0,
                     'csm': 0,
-                    'csd14': 0,
+                    'totalCsd14': 0,
+                    'avgCsd14': 0,
                     'first_blood': 0,
                     'solo_kills': 0
                 }
@@ -100,10 +101,11 @@ def aggregate_player_season_data(match_data):
             player_data[puuid]['dpm'] = round(player_data[puuid]['dmg'] / player_data[puuid]['game_minutes'], 2)
             player_data[puuid]['cs'] += participant['cs']
             player_data[puuid]['csm'] = round(player_data[puuid]['cs'] / player_data[puuid]['game_minutes'], 2)
-            player_data[puuid]['csd14'] += participant['csd14']
+            player_data[puuid]['totalCsd14'] += participant['csd14']
             player_data[puuid]['first_blood'] += participant['firstBlood']
             player_data[puuid]['solo_kills'] += participant['soloBolos']
-            
+    for puuid, pdata in player_data.items():
+        pdata['avgCsd14'] = round(pdata['totalCsd14']/pdata["matches"], 1)
     return player_data
 
 def fetch_riot_data(url):
