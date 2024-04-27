@@ -44,8 +44,7 @@ def main():
         
         # Add to list for excel workbook
         processed_matches.append(processed_match)
-    outputs.build_player_stats_report(aggregate_player_season_data(processed_matches))
-    outputs.build_excel_workbook(processed_matches)
+    outputs.build_cumulative_reports(processed_matches, aggregate_player_season_data(processed_matches))
     outputs.build_match_sheets(processed_matches)
     outputs.build_player_sheets(processed_matches)
     print("Excel workbook created successfully.")
