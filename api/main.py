@@ -4,9 +4,10 @@ from pymongo.server_api import ServerApi
 import os
 from dotenv import load_dotenv
 from process_match_reports import process_match
+from flask_cors import CORS
 
 app = Flask(__name__)
-
+CORS(app)
 client = MongoClient(os.getenv("MONGO_URI"), server_api=ServerApi('1'))
 
 db = client['lcc_lol']
@@ -24,6 +25,13 @@ def add_match():
     else:
         return jsonify({'message': 'Match already exists'})
 
+@app.route('/get_all_matches', methods=['GET'])
+def get_all_matches():
+    match_data = list(matches.find({}, {'_id': 0}))
+    return jsonify(match_data)
+
+
+    
 if __name__ == '__main__':
     load_dotenv(dotenv_path=".env", verbose=True, override=True)  
     app.run(debug='true', host='0.0.0.0')
