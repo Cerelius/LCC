@@ -1,53 +1,28 @@
 import requests
 import os
-from dotenv import load_dotenv
-import outputs
 
 
-def main():
-    # Accept user input for the file name
-    tournament_name = input("Enter the tournament file name (Enter to use LCC_Season_2): ")
-    file_path = f"tournaments/{(tournament_name,'LCC_Season_2')[tournament_name == '']}.txt"    
-    file_name = file_path.split("/")[-1].split(".")[0]
-  
-    # Open the file and read the match IDs
-    with open(file_path, "r") as file:
-        match_ids = file.readlines()
-
-    if not match_ids:
-        print("No match IDs found in the file.")
-        return
+def process_match(match_id):
     
-    processed_matches = []
-    # For each listed match, fetch and transform the data
-    for match_id in match_ids:
-        match_id = match_id.strip()
-        match_url = f"https://americas.api.riotgames.com/lol/match/v5/matches/NA1_{match_id}"
-        riot_match_data = fetch_riot_data(match_url)
-        processed_match = process_match_data(riot_match_data)
-        # Fetch and process timeline data
-        timeline_url = match_url + "/timeline"
-        riot_timeline_data = fetch_riot_data(timeline_url)
-        processed_timeline_data = process_timeline_data(riot_timeline_data)
-        position_data = get_position_data(riot_match_data["info"]["participants"])
-        for position, teams in position_data.items():
-            processed_timeline_data[teams[100]]["csd14"] = processed_timeline_data[teams[100]]["cs14"] - processed_timeline_data[teams[200]]["cs14"]
-            processed_timeline_data[teams[200]]["csd14"] = processed_timeline_data[teams[200]]["cs14"] - processed_timeline_data[teams[100]]["cs14"]
-        # Merge the timeline data with the match data
-        processed_match["participants"] = [dict(participant, **processed_timeline_data[participant["puuid"]]) for participant in processed_match["participants"]]
-        
-        ordered_keys = ["puuid", "player", "champion", "role", "win", "gameLength", "champLevel", "kills", "deaths", "assists", "kda", "kp", "cs", "csm", "cs14", "csd14", "gold", "gpm", "dmg", "dpm", "teamDmg%", "dmgTakenTeam%", "firstBlood", "soloBolos", "tripleKills", "quadraKills", "pentaKills", "multikills", "visionScore", "vspm", "ccTime", "effectiveHealShield", "objectivesStolen"]
-        processed_match["participants"] = [{key: participant[key] for key in ordered_keys} for participant in processed_match["participants"]]
-        
-        # Dump each processed match data to json file for future additional programmatic use
-        outputs.build_match_json(file_name, match_id, processed_match)
-        
-        # Add to list for excel workbook
-        processed_matches.append(processed_match)
-    outputs.build_cumulative_reports(processed_matches, aggregate_player_season_data(processed_matches))
-    outputs.build_match_sheets(processed_matches)
-    outputs.build_player_sheets(processed_matches)
-    print("Excel workbook created successfully.")
+    match_url = f"https://americas.api.riotgames.com/lol/match/v5/matches/NA1_{match_id}"
+    riot_match_data = fetch_riot_data(match_url)
+    processed_match = process_match_data(riot_match_data)
+    # Fetch and process timeline data
+    timeline_url = match_url + "/timeline"
+    riot_timeline_data = fetch_riot_data(timeline_url)
+    processed_timeline_data = process_timeline_data(riot_timeline_data)
+    position_data = get_position_data(riot_match_data["info"]["participants"])
+    for position, teams in position_data.items():
+        processed_timeline_data[teams[100]]["csd14"] = processed_timeline_data[teams[100]]["cs14"] - processed_timeline_data[teams[200]]["cs14"]
+        processed_timeline_data[teams[200]]["csd14"] = processed_timeline_data[teams[200]]["cs14"] - processed_timeline_data[teams[100]]["cs14"]
+    # Merge the timeline data with the match data
+    processed_match["participants"] = [dict(participant, **processed_timeline_data[participant["puuid"]]) for participant in processed_match["participants"]]
+    
+    ordered_keys = ["puuid", "player", "champion", "role", "win", "gameLength", "champLevel", "kills", "deaths", "assists", "kda", "kp", "cs", "csm", "cs14", "csd14", "gold", "gpm", "dmg", "dpm", "teamDmg%", "dmgTakenTeam%", "firstBlood", "soloBolos", "tripleKills", "quadraKills", "pentaKills", "multikills", "visionScore", "vspm", "ccTime", "effectiveHealShield", "objectivesStolen"]
+    processed_match["participants"] = [{key: participant[key] for key in ordered_keys} for participant in processed_match["participants"]]
+    print(processed_match)
+    return processed_match
+   
 
 def get_position_data(participants):
     position_data = {
@@ -194,5 +169,3 @@ def process_participant_data(participant_data):
     participant_information["effectiveHealShield"] = round(participant_data["challenges"]["effectiveHealAndShielding"],0)
     return participant_information
 
-load_dotenv(dotenv_path=".env", verbose=True, override=True)           
-main()
