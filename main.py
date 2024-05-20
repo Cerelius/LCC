@@ -13,6 +13,10 @@ client = MongoClient(os.getenv("MONGO_URI"), server_api=ServerApi('1'))
 db = client['lcc_lol']
 matches = db['matches']
 
+@app.route('/')
+def sanity_check():
+    return "Welcome to the LCC API!"
+
 @app.route('/add_match', methods=['POST'])
 def add_match():
     print('Adding match')
@@ -30,7 +34,10 @@ def get_all_matches():
     match_data = list(matches.find({}, {'_id': 0}))
     return jsonify(match_data)
 
-
+@app.route('/match/<match_id>', methods=['GET'])
+def get_match(match_id):
+    match_data = matches.find_one({"match_id": match_id}, {'_id': 0})
+    return jsonify(match_data)
     
 if __name__ == '__main__':
     load_dotenv(dotenv_path=".env", verbose=True, override=True)  
